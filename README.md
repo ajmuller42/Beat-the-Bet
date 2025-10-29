@@ -1,2 +1,24 @@
 # Beat-the-Bet
-Data Science group project
+### Data Science group project
+
+##### Instructions for importing game data from basketball-reference.com 
+1. go to basketball-reference.com
+2. Find "Scores" in the bar at the top
+3. Change date to the day you want to import the game stats form
+4. Find the game that you're looking for
+5. Select "Box Score"
+6. Scroll down to see "Team A Basic and Advanced Stats"
+7. Click "Share & Export"
+8. Click "Get table as CSV (for Excel)
+9. Copy everything including and below the row that says "Starters, MP, FG, ..."
+10. Find folder in this repo for correct team
+11. Create a new file inside the folder titled "TeamNameMonth.Day.Year.csv"
+12. Paste info
+13. Commit
+14. Go back to basketball-reference and go to the table for the advanced stats for the same team (MP, TS%, eFG%)
+15. Repeat steps 7-10
+16. Create a new file inside the folder titled "TeamNameMonth.Day.Yearadv.csv"
+17. Paste advnaced stats
+18. Commit
+19. Repeat steps 6-18 for Team B
+20. Game is fully imported
