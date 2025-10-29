@@ -22,3 +22,10 @@
 18. Commit
 19. Repeat steps 6-18 for Team B
 20. Game is fully imported
+
+##### NOTE
+Some team files do not use the full name bc I don't want to type out the full name
+List of abbreviations:
+Trailblazers -> Blazers
+Mavericks -> Mavs
+76ers -> Sixers (I just felt like not using numbers in the title of files next to date numbers)
