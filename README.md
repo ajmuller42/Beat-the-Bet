@@ -2,7 +2,7 @@
 ### Data Science group project
 
 ##### Instructions for importing game data from basketball-reference.com 
-1. go to basketball-reference.com
+1. Go to basketball-reference.com
 2. Find "Scores" in the bar at the top
 3. Change date to the day you want to import the game stats form
 4. Find the game that you're looking for
