@@ -29,3 +29,10 @@ List of abbreviations:
 Trailblazers -> Blazers
 Mavericks -> Mavs
 76ers -> Sixers (I just felt like not using numbers in the title of files next to date numbers)
+
+##### HOW TO RUN
+1. run "pip install -r requirements.txt"
+2. run "python3 -m src.dataset"
+3. run "python3 -m src.model"
+4. run "python3 -m src.predict "team1" "team2"
+5. If it tells you to install something in between just "pip install <package>"
