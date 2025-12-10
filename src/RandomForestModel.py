@@ -108,7 +108,7 @@ def train_team_model():
     print("="*60 + "\n")
 
     joblib.dump(model, TEAM_MODEL_PATH)
-    print("✓ Team model saved.\n")
+    print("Team model saved.\n")
 
 
 def get_player_data():
@@ -123,15 +123,13 @@ def get_player_data():
 
     active_players_list = players.get_active_players()
     print(f"Active players: {len(active_players_list)}")
-    print(f"Fetching data for first 450 players...\n")
+    print(f"Fetching data for first 120 players...\n")
 
     failed_players = []
     
-    num_players = 450
-
-    for idx, player in enumerate(active_players_list[:num_players]): 
+    for idx, player in enumerate(active_players_list[:120]): 
         player_name = player['full_name']
-        print(f"[{idx+1:3d}/num_players] {player_name:<25}", end="", flush=True)
+        print(f"[{idx+1:3d}/120] {player_name:<25}", end="", flush=True)
 
         seasons_success = 0
         for season in last_3_seasons():
@@ -159,6 +157,7 @@ def get_player_data():
                 failed_players.append((player_name, season))
             except Exception as e:
                 pass
+
         print(f"({seasons_success}/3 seasons)")
 
     if failed_players:
@@ -230,18 +229,20 @@ def train_player_model():
     model.fit(X_train, y_train)
 
     y_pred = model.predict(X_test)
-    from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+    from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, median_absolute_error
     
     mse = mean_squared_error(y_test, y_pred)
     rmse = np.sqrt(mse)
     mae = mean_absolute_error(y_test, y_pred)
+    median_ae = median_absolute_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
 
     print("="*60)
     print("PLAYER MODEL PERFORMANCE METRICS")
     print("="*60)
-    print(f"R² Score:              {r2:.4f}")
+    print(f"R² Score:              {r2:.4f} ({r2*100:.2f}%)")
     print(f"Mean Absolute Error:   {mae:.4f} points")
+    print(f"Median Absolute Error: {median_ae:.4f} points")
     print(f"Root Mean Squared Err: {rmse:.4f} points")
     print(f"Mean Squared Error:    {mse:.4f}")
     print("="*60 + "\n")
