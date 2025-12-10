@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import joblib
 import pandas as pd
+import json
 from nba_api.stats.static import teams, players
 from src.predict import predict_game, get_team_features, predict_top_players
 
@@ -59,3 +60,12 @@ def api_predict(home: str, away: str):
         }
     except Exception as e:
         return {"error": str(e)}
+    
+@app.get("/stats")
+def get_stats():
+    stats_path = os.path.join("src", "model_stats.json")
+    if os.path.exists(stats_path):
+        with open(stats_path, "r") as f:
+            return json.load(f)
+    else:
+        return {"error": "Model statistics not found."}

@@ -54,4 +54,30 @@ async function predict() {
     });
 }
 
+async function loadStats() {
+    const res = await fetch(`${API_URL}/stats`);
+    const data = await res.json();
+
+    let text = "";
+
+    if (data.team_model) {
+        text += "🏀 TEAM MODEL\n";
+        text += `Accuracy:  ${(data.team_model.accuracy * 100).toFixed(2)}%\n`;
+        text += `Precision: ${(data.team_model.precision * 100).toFixed(2)}%\n`;
+        text += `Recall:    ${(data.team_model.recall * 100).toFixed(2)}%\n`;
+        text += `F1-Score:  ${data.team_model.f1.toFixed(4)}\n\n`;
+    }
+
+    if (data.player_model) {
+        text += "👤 PLAYER MODEL\n";
+        text += `R²:    ${data.player_model.r2.toFixed(4)}\n`;
+        text += `RMSE:  ${data.player_model.rmse.toFixed(3)} pts\n`;
+        text += `MAE:   ${data.player_model.mae.toFixed(3)} pts\n`;
+    }
+
+    document.getElementById("statsOutput").textContent = text;
+    document.getElementById("statsBox").classList.remove("hidden");
+}
+
 loadTeams();
+loadStats();

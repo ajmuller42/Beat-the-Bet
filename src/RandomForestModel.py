@@ -3,6 +3,7 @@ import numpy as np
 import os
 import time
 import joblib
+import json
 from datetime import datetime
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split
@@ -109,6 +110,17 @@ def train_team_model():
 
     joblib.dump(model, TEAM_MODEL_PATH)
     print("Team model saved.\n")
+    metrics = {
+    "team_model": {
+        "accuracy": float(acc),
+        "precision": float(precision),
+        "recall": float(recall),
+        "f1": float(f1)
+    }
+    }   
+
+    with open(os.path.join(BASE_DIR, "model_stats.json"), "w") as f:
+        json.dump(metrics, f, indent=4)
 
 
 def get_player_data():
@@ -249,6 +261,18 @@ def train_player_model():
 
     joblib.dump(model, PLAYER_MODEL_PATH)
     print("Player model saved.\n")
+    with open(os.path.join(BASE_DIR, "model_stats.json"), "r") as f:
+        metrics = json.load(f)
+
+    metrics["player_model"] = {
+        "r2": float(r2),
+        "rmse": float(rmse),
+        "mae": float(mae)
+    }
+
+    with open(os.path.join(BASE_DIR, "model_stats.json"), "w") as f:
+        json.dump(metrics, f, indent=4)
+
 
 
 if __name__ == "__main__":
