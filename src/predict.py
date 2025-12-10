@@ -1,138 +1,75 @@
-import joblib
 import os
-from .parse_StatDumps import parse_StatDumps
+import joblib
+import pandas as pd
+from nba_api.stats.static import teams, players
 
 BASE_DIR = os.path.dirname(__file__)
-XGBoostModel_path = os.path.join(BASE_DIR, "RandomForestModel.pkl")
-XGBoostModel = joblib.load(XGBoostModel_path)
+TEAM_MODEL_PATH = os.path.join(BASE_DIR, "RandomForestModel_Team.pkl")
+PLAYER_MODEL_PATH = os.path.join(BASE_DIR, "RandomForestModel_Player.pkl")
+PLAYER_CACHE_PATH = os.path.join(BASE_DIR, "player_cache.csv")
+PLAYER_STATS = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV']
 
-STATDUMPS_DIR = "StatDumps"
+team_model = joblib.load(TEAM_MODEL_PATH)
+player_model = joblib.load(PLAYER_MODEL_PATH)
+player_cache = pd.read_csv(PLAYER_CACHE_PATH, parse_dates=['GAME_DATE'])
 
-DEFAULT_STATS = {
-    'ORtg': 110,
-    'DRtg': 105,
-    'TS%': 0.55,
-    'AST%': 25,
-    'TOV%': 12
-}
+nba_teams = {t['full_name'].lower(): t for t in teams.get_teams()}
+active_players = players.get_active_players()
+player_id_map = {p['id']: p['full_name'] for p in active_players}
+player_team_map = {p['full_name'].lower(): p.get('team_name', '') for p in active_players}
 
+def get_team_features(team_name):
+    df = player_cache.copy()
+    df = df[df['Player_ID'].isin([p['id'] for p in active_players if p.get('team_name', '').lower() == team_name.lower()])]
+    if df.empty:
+        return [0] * len(PLAYER_STATS)
+    return [df[s].mean() if s in df.columns else 0 for s in PLAYER_STATS]
 
-def get_latest_csv(team_name):
-    team_dir = os.path.join(STATDUMPS_DIR, team_name)
+def predict_top_players(team_name, n_players=5):
+    team_players = [p for p in active_players if p.get('team_name', '').lower() == team_name.lower()]
+    predictions = []
+    for p in team_players:
+        pid = p['id']
+        df = player_cache[player_cache['Player_ID'] == pid].sort_values('GAME_DATE', ascending=False).head(5)
+        stats = [df[s].mean() if s in df.columns and not df.empty else 0 for s in PLAYER_STATS]
+        pred_pts = float(player_model.predict([stats])[0])
+        predictions.append((p['full_name'], pred_pts))
+    predictions.sort(key=lambda x: x[1], reverse=True)
+    return predictions[:n_players]
 
-    if not os.path.exists(team_dir):
-        error_message = "No folder found for team '{}'".format(team_name)
-        raise FileNotFoundError(error_message)
+def predict_game(home_team_name, away_team_name):
+    home_team = nba_teams.get(home_team_name.lower())
+    away_team = nba_teams.get(away_team_name.lower())
+    if not home_team or not away_team:
+        print("One or both team names are invalid.")
+        return
 
-    csv_files = []
-    all_files = os.listdir(team_dir)
-    for file in all_files:
-        if file.endswith(".csv"):
-            csv_files.append(file)
+    home_features = get_team_features(home_team_name)
+    away_features = get_team_features(away_team_name)
+    X = [home_features + away_features]
+    prob_home = float(team_model.predict_proba(X)[0][1])
+    prob_away = 1 - prob_home
 
-    if not csv_files:
-        error_message = "No CSV files found for team '{}'".format(team_name)
-        raise FileNotFoundError(error_message)
+    print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print(f"NBA Game Prediction: {home_team_name} vs {away_team_name}")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print(f"Win Probability: {home_team_name}: {prob_home*100:.2f}% | {away_team_name}: {prob_away*100:.2f}%\n")
 
-    csv_files.sort()
-    latest_file = csv_files[-1]
-    return os.path.join(team_dir, latest_file)
+    top_home = predict_top_players(home_team_name)
+    top_away = predict_top_players(away_team_name)
 
-
-def load_team_stats(filepath):
-    parsed = parse_StatDumps(filepath)
-
-    team_stats = parsed["team_stats"]
-    players = parsed["players"]
-
-    cleaned = {}
-    for key, default_value in DEFAULT_STATS.items():
-        value = team_stats.get(key, default_value)
-        cleaned[key] = float(value)
-
-    return cleaned, players
-
-
-
-def predict_matchup(team1_name, team2_name):
-    team1_csv = get_latest_csv(team1_name)
-    team2_csv = get_latest_csv(team2_name)
-
-    team1_stats, team1_players = load_team_stats(team1_csv)
-    team2_stats, team2_players = load_team_stats(team2_csv)
-
-    ortg_diff = team1_stats['ORtg'] - team2_stats['ORtg']
-    drtg_diff = team1_stats['DRtg'] - team2_stats['DRtg']
-    ts_diff   = team1_stats['TS%']  - team2_stats['TS%']
-    ast_diff  = team1_stats['AST%'] - team2_stats['AST%']
-    tov_diff  = team1_stats['TOV%'] - team2_stats['TOV%']
-
-    features = [[ortg_diff, drtg_diff, ts_diff, ast_diff, tov_diff]]
-    prob = XGBoostModel.predict_proba(features)[0]
-
-    print("\nPredicted probabilities:")
-    print(f"{team1_name}: {prob[1]:.3f}")
-    print(f"{team2_name}: {prob[0]:.3f}")
-
-    print("\nTeam stat comparison:")
-    for k in team1_stats:
-        print(
-            f"{k}: "
-            f"{team1_name} {team1_stats[k]:.2f} | "
-            f"{team2_name} {team2_stats[k]:.2f}"
-        )
-
-    print("\nKey players to watch:\n")
-
-    print(team1_name)
-    for p in get_key_players(team1_players):
-        print(" -", format_player(p))
-
-    print("\n" + team2_name)
-    for p in get_key_players(team2_players):
-        print(" -", format_player(p))
-
-    return {
-        team1_name: float(prob[1]),
-        team2_name: float(prob[0])
-    }
-
-
-
-def format_player(p):
-    return (
-        f"{p['name']} | "
-        f"MP {p['MP']:.1f} | "
-        f"BPM {p['BPM']:+.1f} | "
-        f"USG {p['USG%']:.1f}% | "
-        f"TS {p['TS%']*100:.1f}%"
-    )
-
-def get_key_players(players, n=3):
-    ranked = []
-
-    for p in players:
-        impact = (
-            0.4 * p["BPM"] +
-            0.3 * p["USG%"] -
-            0.2 * p["DRtg"] +
-            0.1 * p["ORtg"]
-        ) * (p["MP"] / 36)
-
-        ranked.append((impact, p))
-
-    ranked.sort(reverse=True, key=lambda X: X[0])
-    return [p for _, p in ranked[:n]]
-
+    print(f"Top Home Players to Watch ({home_team_name}):")
+    print("──────────────────────────────────────────────────")
+    for name, pts in top_home:
+        print(f"{name:<25} → Predicted Points: {pts:.1f}")
+    print()
+    print(f"Top Away Players to Watch ({away_team_name}):")
+    print("──────────────────────────────────────────────────")
+    for name, pts in top_away:
+        print(f"{name:<25} → Predicted Points: {pts:.1f}")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
 
 if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) != 3:
-        print("Usage: python3 -m src.predict <team1> <team2>")
-        sys.exit(1)
-
-    team1 = sys.argv[1]
-    team2 = sys.argv[2]
-
-    predict_matchup(team1, team2)
+    home_team_name = input("Enter Home Team: ")
+    away_team_name = input("Enter Away Team: ")
+    predict_game(home_team_name, away_team_name)
