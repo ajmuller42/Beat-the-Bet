@@ -30,6 +30,15 @@ Trailblazers -> Blazers
 Mavericks -> Mavs
 76ers -> Sixers (I just felt like not using numbers in the title of files next to date numbers)
 
+##### NBA stats API
+https://github.com/swar/nba_api
+
+##### API Table of Contents
+https://github.com/swar/nba_api/blob/master/docs/table_of_contents.md
+
+##### To install API:
+pip install nba_api
+
 ##### HOW TO RUN
 1. run "pip install -r requirements.txt"
 2. run "python3 -m src.dataset"
