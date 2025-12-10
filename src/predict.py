@@ -17,6 +17,11 @@ nba_teams = {t['full_name'].lower(): t for t in teams.get_teams()}
 active_players = players.get_active_players()
 player_id_map = {p['id']: p['full_name'] for p in active_players}
 player_team_map = {p['full_name'].lower(): p.get('team_name', '') for p in active_players}
+N_RECENT_GAMES = 20
+TOP_N_PLAYERS = 10
+player_id_to_name = {p['id']: p['full_name'] for p in active_players}
+PLAYER_STATS = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV']
+ROLL_FEATURES = [f"{s}_ROLL5" for s in PLAYER_STATS]
 
 def get_team_features(team_name):
     df = player_cache.copy()
@@ -25,15 +30,36 @@ def get_team_features(team_name):
         return [0] * len(PLAYER_STATS)
     return [df[s].mean() if s in df.columns else 0 for s in PLAYER_STATS]
 
-def predict_top_players(team_name, n_players=5):
-    team_players = [p for p in active_players if p.get('team_name', '').lower() == team_name.lower()]
+def predict_top_players(n_players=TOP_N_PLAYERS, lookback=N_RECENT_GAMES):
     predictions = []
-    for p in team_players:
-        pid = p['id']
-        df = player_cache[player_cache['Player_ID'] == pid].sort_values('GAME_DATE', ascending=False).head(5)
-        stats = [df[s].mean() if s in df.columns and not df.empty else 0 for s in PLAYER_STATS]
-        pred_pts = float(player_model.predict([stats])[0])
-        predictions.append((p['full_name'], pred_pts))
+
+    grouped = player_cache.groupby('Player_ID')
+
+    for player_id, df in grouped:
+        if player_id not in player_id_to_name:
+            continue
+
+        df = df.sort_values('GAME_DATE')
+
+        for stat in PLAYER_STATS:
+            df[f"{stat}_ROLL5"] = (
+                df[stat]
+                .rolling(5)
+                .mean()
+                .shift(1)
+            )
+
+        df = df.dropna()
+
+        if len(df) < lookback:
+            continue
+
+        recent = df.tail(lookback)
+        features = pd.DataFrame([recent[ROLL_FEATURES].mean()])
+
+        pred_pts = float(player_model.predict(features)[0])
+        predictions.append((player_id_to_name[player_id], pred_pts))
+
     predictions.sort(key=lambda x: x[1], reverse=True)
     return predictions[:n_players]
 
@@ -55,18 +81,15 @@ def predict_game(home_team_name, away_team_name):
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print(f"Win Probability: {home_team_name}: {prob_home*100:.2f}% | {away_team_name}: {prob_away*100:.2f}%\n")
 
-    top_home = predict_top_players(home_team_name)
-    top_away = predict_top_players(away_team_name)
+    print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("Top Fantasy Players to Invest In (League-Wide)")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-    print(f"Top Home Players to Watch ({home_team_name}):")
-    print("──────────────────────────────────────────────────")
-    for name, pts in top_home:
-        print(f"{name:<25} → Predicted Points: {pts:.1f}")
-    print()
-    print(f"Top Away Players to Watch ({away_team_name}):")
-    print("──────────────────────────────────────────────────")
-    for name, pts in top_away:
-        print(f"{name:<25} → Predicted Points: {pts:.1f}")
+    top_players = predict_top_players()
+
+    for i, (name, pts) in enumerate(top_players, 1):
+        print(f"{i:>2}. {name:<25} → Projected Fantasy PTS: {pts:.1f}")
+
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
 
 if __name__ == "__main__":
