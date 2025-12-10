@@ -1,0 +1,8 @@
+1. XGBoost had accuracy about 0.53 before we built Random Forest
+2. Random Forest accuracy of 0.98 on training data seemed high, 
+    but it held up against testing data as well.
+3. Areas of difficulty:
+        Finding a good data source: manually importing from basketball reference took forever, api takes forever to load data on run time but has much more volume and takes zero time beforehand
+        Switching from manual input database to api was complicated
+4. Basketaball court background with Missouri S&T theme around the outside where teams logos and colors goo
+

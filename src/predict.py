@@ -121,7 +121,7 @@ def get_key_players(players, n=3):
 
         ranked.append((impact, p))
 
-    ranked.sort(reverse=True, key=lambda x: x[0])
+    ranked.sort(reverse=True, key=lambda X: X[0])
     return [p for _, p in ranked[:n]]
 
 
