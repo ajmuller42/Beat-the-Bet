@@ -27,7 +27,7 @@ RETRY_DELAY = 2.0
 
 def last_3_seasons():
     y = datetime.now().year
-    return [f"{y-i-1}-{str(y-i)[-2:]}" for i in range(3)]
+    return [f"{y-i-1}-{str(y-i)[-2:]}" for i in range(10)]
 
 
 def safe_api_call(func, *args, **kwargs):
@@ -123,13 +123,15 @@ def get_player_data():
 
     active_players_list = players.get_active_players()
     print(f"Active players: {len(active_players_list)}")
-    print(f"Fetching data for first 120 players...\n")
+    print(f"Fetching data for first 450 players...\n")
 
     failed_players = []
     
-    for idx, player in enumerate(active_players_list[:120]): 
+    num_players = 450
+
+    for idx, player in enumerate(active_players_list[:num_players]): 
         player_name = player['full_name']
-        print(f"[{idx+1:3d}/120] {player_name:<25}", end="", flush=True)
+        print(f"[{idx+1:3d}/num_players] {player_name:<25}", end="", flush=True)
 
         seasons_success = 0
         for season in last_3_seasons():
