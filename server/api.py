@@ -60,12 +60,3 @@ def api_predict(home: str, away: str):
         }
     except Exception as e:
         return {"error": str(e)}
-    
-@app.get("/stats")
-def get_stats():
-    stats_path = os.path.join("src", "model_stats.json")
-    if os.path.exists(stats_path):
-        with open(stats_path, "r") as f:
-            return json.load(f)
-    else:
-        return {"error": "Model statistics not found."}
