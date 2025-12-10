@@ -20,16 +20,16 @@ def trainModel():
     y = data['result']
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2, shuffle = False)
-    model = XGBClassifier(n_estimators = 300, learning_rate = 0.03, max_depth = 5)
+    model = XGBClassifier(n_estimators = 300, learning_rate = 0.02, max_depth = 5)
     model.fit(x_train, y_train)
     predictions = model.predict(x_test)
 
     print("Accuracy: ", accuracy_score(y_test, predictions))
     BASE_DIR = os.path.dirname(__file__)
-    model_path = os.path.join(BASE_DIR, 'model.pkl')
+    model_path = os.path.join(BASE_DIR, 'XGBoostModel.pkl')
     joblib.dump(model, model_path)
 
-    print("The Model has been successfully saved to model.pkl!")
+    print("The Model has been successfully saved to XGBoostModel.pkl!")
 
 if __name__ == "__main__":
     trainModel()
