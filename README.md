@@ -42,6 +42,6 @@ pip install nba_api
 ##### HOW TO RUN
 1. run "pip install -r requirements.txt"
 2. run "python3 -m src.dataset"
-3. run "python3 -m src.model"
+3. run "python3 -m src.XGBoostModel"
 4. run "python3 -m src.predict "team1" "team2"
 5. If it tells you to install something in between just "pip install <package>"

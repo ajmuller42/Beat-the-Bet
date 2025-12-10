@@ -3,8 +3,8 @@ import os
 from .parse_StatDumps import parse_StatDumps
 
 BASE_DIR = os.path.dirname(__file__)
-model_path = os.path.join(BASE_DIR, "model.pkl")
-model = joblib.load(model_path)
+XGBoostModel_path = os.path.join(BASE_DIR, "XGBoostModel.pkl")
+XGBoostModel = joblib.load(XGBoostModel_path)
 
 STATDUMPS_DIR = "StatDumps"
 
@@ -68,7 +68,7 @@ def predict_matchup(team1_name, team2_name):
     tov_diff  = team1_stats['TOV%'] - team2_stats['TOV%']
 
     features = [[ortg_diff, drtg_diff, ts_diff, ast_diff, tov_diff]]
-    prob = model.predict_proba(features)[0]
+    prob = XGBoostModel.predict_proba(features)[0]
 
     print("\nPredicted probabilities:")
     print(f"{team1_name}: {prob[1]:.3f}")
