@@ -27,7 +27,7 @@ RETRY_DELAY = 2.0
 
 def last_3_seasons():
     y = datetime.now().year
-    return [f"{y-i-1}-{str(y-i)[-2:]}" for i in range(10)]
+    return [f"{y-i-1}-{str(y-i)[-2:]}" for i in range(20)]
 
 
 def safe_api_call(func, *args, **kwargs):
@@ -127,9 +127,11 @@ def get_player_data():
 
     failed_players = []
     
-    for idx, player in enumerate(active_players_list[:120]): 
+    num_players = 450
+
+    for idx, player in enumerate(active_players_list[:num_players]): 
         player_name = player['full_name']
-        print(f"[{idx+1:3d}/120] {player_name:<25}", end="", flush=True)
+        print(f"[{idx+1:3d}/{num_players}] {player_name:<25}", end="", flush=True)
 
         seasons_success = 0
         for season in last_3_seasons():
@@ -217,7 +219,7 @@ def train_player_model():
     print(f"Features shape: {X.shape}")
     print(f"Target shape: {y.shape}\n")
     
-    test_size = min(0.2, max(0.1, 10 / len(df_clean)))
+    test_size = 0.1
     print(f"Using test_size={test_size:.2f}")
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
