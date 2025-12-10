@@ -3,7 +3,7 @@ import os
 from .parse_StatDumps import parse_StatDumps
 
 BASE_DIR = os.path.dirname(__file__)
-XGBoostModel_path = os.path.join(BASE_DIR, "XGBoostModel.pkl")
+XGBoostModel_path = os.path.join(BASE_DIR, "RandomForestModel.pkl")
 XGBoostModel = joblib.load(XGBoostModel_path)
 
 STATDUMPS_DIR = "StatDumps"
