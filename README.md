@@ -39,9 +39,12 @@ https://github.com/swar/nba_api/blob/master/docs/table_of_contents.md
 ##### To install API:
 pip install nba_api
 
-##### HOW TO RUN
-1. run "pip install -r requirements.txt"
-2. run "python3 -m src.dataset"
-3. run "python3 -m src.XGBoostModel"
-4. run "python3 -m src.predict "team1" "team2"
-5. If it tells you to install something in between just "pip install <package>"
+##### HOW TO RUN (ON VS CODE)
+1. cd server
+2. pip install -r requirements.txt
+3. cd ..
+4. uvicorn server.api:app --reload
+5. Open the extensions tab on VS code and search up "Live Server"
+6. Install "Live Server" by Ritwick Dey
+7. Expand the frontend directory on the left-hand bar and right-click on index.html
+8. Click "Open with Live Server"
