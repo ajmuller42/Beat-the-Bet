@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NBA Prediction Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>🏀 NBA Matchup Predictor</h1>
+
+    <div class="selector-box">
+        <div>
+            <label>Home Team</label>
+            <select id="homeTeam"></select>
+        </div>
+
+        <div>
+            <label>Away Team</label>
+            <select id="awayTeam"></select>
+        </div>
+
+        <button onclick="predict()">Predict Game</button>
+    </div>
+
+    <div id="result" class="result-box hidden">
+        <h2>Prediction Result</h2>
+        <p id="probability"></p>
+
+        <h3>Top Predicted Players</h3>
+        <table id="playersTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Pred Pts</th>
+                    <th>REB</th>
+                    <th>AST</th>
+                    <th>STL</th>
+                    <th>BLK</th>
+                    <th>TOV</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

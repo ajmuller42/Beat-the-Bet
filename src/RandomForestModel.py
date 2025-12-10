@@ -3,6 +3,7 @@ import numpy as np
 import os
 import time
 import joblib
+import json
 from datetime import datetime
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split
@@ -109,7 +110,6 @@ def train_team_model():
 
     joblib.dump(model, TEAM_MODEL_PATH)
     print("Team model saved.\n")
-
 
 def get_player_data():
     if os.path.exists(PLAYER_CACHE_PATH):
