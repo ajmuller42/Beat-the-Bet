@@ -1,28 +1,6 @@
 # Beat-the-Bet
 ### Data Science group project
 
-##### Instructions for importing game data from basketball-reference.com 
-1. Go to basketball-reference.com
-2. Find "Scores" in the bar at the top
-3. Change date to the day you want to import the game stats form
-4. Find the game that you're looking for
-5. Select "Box Score"
-6. Scroll down to see "Team A Basic and Advanced Stats"
-7. Click "Share & Export"
-8. Click "Get table as CSV (for Excel)
-9. Copy everything including and below the row that says "Starters, MP, FG, ..."
-10. Find folder in this repo for correct team
-11. Create a new file inside the folder titled "TeamNameMonth.Day.Year.csv"
-12. Paste info
-13. Commit
-14. Go back to basketball-reference and go to the table for the advanced stats for the same team (MP, TS%, eFG%)
-15. Repeat steps 7-10
-16. Create a new file inside the folder titled "TeamNameMonth.Day.Yearadv.csv"
-17. Paste advnaced stats
-18. Commit
-19. Repeat steps 6-18 for Team B
-20. Game is fully imported
-
 ##### NOTE
 Some team files do not use the full name bc I don't want to type out the full name
 List of abbreviations:
@@ -44,7 +22,8 @@ pip install nba_api
 2. pip install -r requirements.txt
 3. cd ..
 4. uvicorn server.api:app --reload
-5. Open the extensions tab on VS code and search up "Live Server"
-6. Install "Live Server" by Ritwick Dey
-7. Expand the frontend directory on the left-hand bar and right-click on index.html
-8. Click "Open with Live Server"
+5. If this throws an error, try this line instead: python -m uvicorn server.api:app --reload
+6. Open the extensions tab on VS code and search up "Live Server"
+7. Install "Live Server" by Ritwick Dey
+8. Expand the frontend directory on the left-hand bar and right-click on index.html
+9. Click "Open with Live Server"
