@@ -65,60 +65,87 @@ def get_team_data():
     print(f"Total TEAM rows: {len(final_df)}\n")
     return final_df
 
-
-def train_team_model():
-    df = get_team_data()
-    df['HOME'] = df['MATCHUP'].str.contains(' vs. ').astype(int)
+def add_rolling_features(df):
     df = df.sort_values(['TEAM_ID', 'GAME_DATE'])
-
     for stat in TEAM_STATS:
         df[f"{stat}_ROLL5"] = (
-        df.groupby('TEAM_ID')[stat]
-        .shift(1)
-        .rolling(5, min_periods=1)
-        .mean()
+            df.groupby('TEAM_ID')[stat]
+                .shift(1)
+                .rolling(5, min_periods=1)
+                .mean()
         )
+    return df
+
+def build_games(df):
+    df['HOME'] = df['MATCHUP'].str.contains(' vs. ').astype(int)
+    roll = [f"{s}_ROLL5" for s in TEAM_STATS]
+
+
+    home = df[df['HOME'] == 1][['GAME_ID'] + roll]
+    away = df[df['HOME'] == 0][['GAME_ID'] + roll]
+
+
+    home = home.rename(columns={c: f"{c}_HOME" for c in roll})
+    away = away.rename(columns={c: f"{c}_AWAY" for c in roll})
+
+
+    games = home.merge(away, on='GAME_ID')
+
+
+    scores = df[['GAME_ID', 'TEAM_ID', 'PTS', 'HOME']]
+    home_pts = scores[scores['HOME'] == 1][['GAME_ID', 'PTS']]
+    away_pts = scores[scores['HOME'] == 0][['GAME_ID', 'PTS']]
+
+
+    games = games.merge(home_pts, on='GAME_ID')
+    games = games.merge(away_pts, on='GAME_ID', suffixes=('_HOME', '_AWAY'))
+
+
+    games['HOME_WIN'] = (games['PTS_HOME'] > games['PTS_AWAY']).astype(int)
+
 
     roll_features = [f"{s}_ROLL5" for s in TEAM_STATS]
-    df = df.dropna(subset = roll_features)
 
-    home_df = df[df['HOME'] == 1][['GAME_ID', 'TEAM_ID'] + roll_features].copy()
-    away_df = df[df['HOME'] == 0][['GAME_ID', 'TEAM_ID'] + roll_features].copy()
-    home_df.columns = ['GAME_ID'] + [f"{c}_HOME" for c in roll_features]
-    away_df.columns = ['GAME_ID'] + [f"{c}_AWAY" for c in roll_features]
-
-    games = home_df.merge(
-        away_df,
-        on='GAME_ID',
+    feature_cols = (
+        [f"{f}_HOME" for f in roll_features] +
+        [f"{f}_AWAY" for f in roll_features]
     )
 
-    scores = df[['GAME_ID', 'TEAM_ID', 'PTS']]
-    home_scores = scores.merge(df[df['HOME'] == 1][['GAME_ID', 'TEAM_ID']], on=['GAME_ID', 'TEAM_ID'])
-    away_scores = scores.merge(df[df['HOME'] == 0][['GAME_ID', 'TEAM_ID']], on=['GAME_ID', 'TEAM_ID'])
+    X = games[feature_cols].copy()
+    y = games['HOME_WIN']
 
 
-    final = games.merge(
-    home_scores[['GAME_ID', 'PTS']], on='GAME_ID', how='left'
-    ).merge(
-    away_scores[['GAME_ID', 'PTS']], on='GAME_ID', how='left', suffixes=('_HOME', '_AWAY')
-    )
+    return X, y
 
 
-    final['HOME_WIN'] = (final['PTS_HOME'] > final['PTS_AWAY']).astype(int)
+def train_team_model():
+    df = get_team_data().sort_values('GAME_DATE')
 
-
-    feature_cols = [c for c in final.columns if c.endswith('_HOME') or c.endswith('_AWAY')]
-    X = final[feature_cols]
-    y = final['HOME_WIN']
 
     split_date = df['GAME_DATE'].quantile(0.8)
-    train_idx = final.index < final.index[int(len(final) * 0.8)]
 
 
-    X_train, X_test = X[train_idx], X[~train_idx]
-    y_train, y_test = y[train_idx], y[~train_idx]
+    df_train = df[df['GAME_DATE'] <= split_date].copy()
+    df_test = df[df['GAME_DATE'] > split_date].copy()
 
-    model = RandomForestClassifier(n_estimators=200, max_depth=8, n_jobs=-1, random_state=42)
+
+    df_train = add_rolling_features(df_train)
+    df_test = add_rolling_features(df_test)
+
+
+    X_train, y_train = build_games(df_train)
+    X_test, y_test = build_games(df_test)
+
+
+    model = RandomForestClassifier(
+        n_estimators=200,
+        max_depth=6,
+        random_state=42,
+        n_jobs=-1
+    )
+    
+    print(X_train.columns.tolist())
+
     model.fit(X_train, y_train)
 
     y_pred = model.predict(X_test)
