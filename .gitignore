@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+src/__pycache__/
+server/__pycache__/
+venv/
+.env/
+.venv/
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
+*.log
