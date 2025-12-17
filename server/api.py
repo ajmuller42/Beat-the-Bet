@@ -5,7 +5,7 @@ import joblib
 import pandas as pd
 import json
 from nba_api.stats.static import teams, players
-from src.predict import predict_game, get_team_features, predict_top_players
+from src.predict import predict_game, get_team_roll_features, predict_top_players
 
 app = FastAPI()
 
@@ -37,12 +37,13 @@ def api_predict(home: str, away: str):
     """Return prediction + top players in JSON."""
     try:
         # Team win probability
-        home_features = get_team_features(home)
-        away_features = get_team_features(away)
+        home_features = get_team_roll_features(home)
+        away_features = get_team_roll_features(away)
 
         import pandas as pd
-        TEAM_STATS = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV']
-        feature_cols = [f"{s}_HOME" for s in TEAM_STATS] + [f"{s}_AWAY" for s in TEAM_STATS]
+        ROLL_STATS = [f"{s}_ROLL5" for s in ['PTS','REB','AST','STL','BLK','TOV']]
+        feature_cols = [f"{s}_HOME" for s in ROLL_STATS] + [f"{s}_AWAY" for s in ROLL_STATS]
+
 
         X = pd.DataFrame([home_features + away_features], columns=feature_cols)
         prob_home = float(team_model.predict_proba(X)[0][1])

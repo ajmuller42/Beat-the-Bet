@@ -26,8 +26,15 @@ async function predict() {
     const home = document.getElementById("homeTeam").value;
     const away = document.getElementById("awayTeam").value;
 
-    const res = await fetch(`${API_URL}/predict?home=${home}&away=${away}`);
+    const res = await fetch(
+        `${API_URL}/predict?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}`
+    );
     const data = await res.json();
+
+    if (data.error) {
+        alert(`Prediction failed: ${data.error}`);
+        return;
+    }
 
     document.getElementById("result").classList.remove("hidden");
 
@@ -38,6 +45,11 @@ async function predict() {
 
     const tbody = document.querySelector("#playersTable tbody");
     tbody.innerHTML = "";
+
+    if (!Array.isArray(data.players)) {
+        console.warn("No player data returned:", data);
+        return;
+    }
 
     data.players.forEach(p => {
         const row = document.createElement("tr");
@@ -53,5 +65,6 @@ async function predict() {
         tbody.appendChild(row);
     });
 }
+
 
 loadTeams();

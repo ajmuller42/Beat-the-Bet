@@ -23,100 +23,86 @@ player_id_to_name = {p['id']: p['full_name'] for p in active_players}
 
 def get_team_roll_features(team_name, season='2024-25', lookback=5):
     team_id = None
-    for t in nba_teams:
-        if t['full_name'].lower() == team_name.lower() or t['nickname'].lower() == team_name.lower():
-            team_id = t['id']
-        break
 
+    # ✅ iterate over VALUES, not keys
+    for t in nba_teams.values():
+        if (
+            t['full_name'].lower() == team_name.lower()
+            or t['nickname'].lower() == team_name.lower()
+        ):
+            team_id = t['id']
+            break  # break ONLY when found
 
     if team_id is None:
         raise ValueError(f"Team '{team_name}' not found")
-
 
     log = LeagueGameLog(season=season)
     df = log.get_data_frames()[0]
     df['GAME_DATE'] = pd.to_datetime(df['GAME_DATE'])
 
-
     team_games = df[df['TEAM_ID'] == team_id].sort_values('GAME_DATE')
-
 
     if len(team_games) < lookback:
         raise ValueError(f"Not enough games for {team_name}")
 
-
     recent = team_games.tail(lookback)
 
-
-    # Match training semantics: mean of last 5 games
     return [
-        recent['PTS'].mean(),
-        recent['REB'].mean(),
-        recent['AST'].mean(),
-        recent['STL'].mean(),
-        recent['BLK'].mean(),
-        recent['TOV'].mean(),
-]
+        float(recent['PTS'].mean()),
+        float(recent['REB'].mean()),
+        float(recent['AST'].mean()),
+        float(recent['STL'].mean()),
+        float(recent['BLK'].mean()),
+        float(recent['TOV'].mean()),
+    ]
 
 
 
 def predict_top_players(team_names=None, n_players=15, lookback=25):
     results = []
 
-
     if player_cache.empty:
         return results
 
-
-    grouped = player_cache.groupby('PLAYER_ID')
-
+    grouped = player_cache.groupby("PLAYER_ID")
 
     for player_id, df_player in grouped:
         if player_id not in player_id_to_name:
             continue
 
-
-        df = df_player.sort_values('GAME_DATE').copy()
-
+        df = df_player.sort_values("GAME_DATE").copy()
 
         missing = [s for s in PLAYER_STATS if s not in df.columns]
         if missing:
             continue
 
-
         for stat in PLAYER_STATS:
             df[f"{stat}_ROLL5"] = (
-            df[stat]
-            .rolling(5, min_periods=1)
-            .mean()
-            .shift(1)
-        )
-
+                df[stat]
+                .rolling(5, min_periods=1)
+                .mean()
+                .shift(1)
+            )
 
         df = df.dropna(subset=ROLL_FEATURES)
         if len(df) < lookback:
             continue
 
-
         recent = df.tail(lookback)
 
-
-        # ### CHANGED ### use most recent rolling vector
         features = pd.DataFrame([recent[ROLL_FEATURES].iloc[-1]])
-
 
         pred_pts = float(player_model.predict(features)[0])
 
+        results.append({
+            "name": player_id_to_name[player_id],
+            "pred_pts": round(pred_pts, 1),
+            **{stat: round(recent[stat].mean(), 1) for stat in PLAYER_STATS}
+        })
 
-    results.append({
-    "name": player_id_to_name[player_id],
-    "pred_pts": round(pred_pts, 1),
-    **{stat: round(recent[stat].mean(), 1) for stat in PLAYER_STATS}
-    })
-
-
-    results.sort(key=lambda x: x['pred_pts'], reverse=True)
+    results.sort(key=lambda x: x["pred_pts"], reverse=True)
     return results[:n_players]
+
 
 def predict_game(home_team_name, away_team_name):
     home_features = get_team_roll_features(home_team_name)
